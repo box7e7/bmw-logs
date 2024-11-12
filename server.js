@@ -153,7 +153,7 @@ async function getJobDetails(po, auth_token) {
 
 async function getAuthInfo(){
   let auth_token_obj =  await fs.readFile('./cookies.json');
-  auth_token=JSON.parse(auth_token_obj)["data"][0]["authToken"]
+  let auth_token=JSON.parse(auth_token_obj)["data"][0]["authToken"]
   console.log("///////////////// auth token //////////////////////\n",auth_token)
 
   const decoded=getpayload(auth_token)
