@@ -1,15 +1,17 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const fs = require('fs').promises
-const moment = require('moment');
-const jwt = require('jsonwebtoken');
-const getAuthTokenUrgently=require("./getAuthToken_export")
-const getpayload= require("./getpayload")
-const axios = require('axios');
-// Import Prisma Client
-const { PrismaClient } = require('@prisma/client');
+import express from 'express';
+import bodyParser from 'body-parser';
+import { promises as fs } from 'fs';
+import moment from 'moment';
+import jwt from 'jsonwebtoken';
+import getAuthTokenUrgently from "./getAuthToken_export.mjs";
+import getpayload from "./getpayload.mjs";
+import axios from 'axios';
+import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const prisma = new PrismaClient();
-require('dotenv').config();
 
 const JWT_SECRET=process.env.JWT_SECRET
 
