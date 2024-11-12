@@ -240,71 +240,11 @@ app.use((req, res, next) => {
   }
 });
 
+
 app.get('/', (req, res) => {
   res.send('Welcome to the authenticated route!');
 });
 
-
-app.get('/jobs', (req, res) => {
-    const { po_number, start_date, end_date, status } = req.query;
-  
-    let query = 'SELECT * FROM jobs WHERE 1=1';
-    let params = [];
-  
-    if (po_number) {
-      query += ' AND po_number = ?';
-      params.push(po_number);
-    }
-  
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status);
-    }
-  
-    const getJobsFromDb = (db, query, params) => {
-      return new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows);
-          }
-        });
-      });
-    };
-  
-    Promise.all([getJobsFromDb(db1, query, params), getJobsFromDb(db2, query, params)])
-      .then(results => {
-        const combinedResults = [...results[0], ...results[1]];
-  
-        // Log all received jobs
-        console.log('All received jobs:', combinedResults);
-  
-        // Filter results based on start_date and end_date using moment's isBetween
-        const filteredResults = combinedResults.filter(job => {
-          const jobTimestamp = moment(job.timestamp,'MM/DD/YYYY, hh:mm:ss A');
-          if (start_date && end_date) {
-            return jobTimestamp.isBetween(
-              moment(start_date, 'MM/DD/YYYY').startOf('day'),
-              moment(end_date, 'MM/DD/YYYY').endOf('day'),
-              null,
-              '[]'
-            );
-          } else if (start_date) {
-            return jobTimestamp.isSameOrAfter(moment(start_date, 'MM/DD/YYYY').startOf('day'));
-          } else if (end_date) {
-            return jobTimestamp.isSameOrBefore(moment(end_date, 'MM/DD/YYYY').endOf('day'));
-          } else {
-            return true;
-          }
-        });
-  
-        res.json({ data: filteredResults });
-      })
-      .catch(err => {
-        res.status(500).json({ error: err.message });
-      });
-  });
 
 
 app.get('/jobinfo', async (req, res) => {
