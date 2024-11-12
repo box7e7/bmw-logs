@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type BmwVehicle {
+  color String?
+  make  String?
+  model String?
+  vin   String?
+  year  String?
+}
+
+type Customer {
+  name String?
+  phone  String?
+  email String?
+}
+
+model bmw {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  DriverName      String
+  PO              Float      @unique(map: "PO_1")
+  PdfCreatedAt    String?
+  callId          Float?
+  casePO          String
+  completed       String
+  contact         String
+  createdAT       DateTime
+  dispached_date  String?
+  driverIdTowbook Float?
+  price           Float
+  service         String
+  serviceType     String?
+  towFrom         String
+  towTo           String?
+  vehicle         BmwVehicle
+  update          Boolean?
+}
