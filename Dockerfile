@@ -14,9 +14,6 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the Next.js app
-RUN yarn build
-
 # Stage 2: Set up production environment without Puppeteer and cron
 FROM node:18-alpine
 
