@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 
 function getpayload(token){
@@ -15,4 +15,4 @@ function getpayload(token){
 
 }
 
-module.exports = getpayload
+export default getpayload;
