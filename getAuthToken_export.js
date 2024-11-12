@@ -69,5 +69,5 @@ const func=async()=>{
 }
 
 
-module.exports=func
+export default func;
 // func()
