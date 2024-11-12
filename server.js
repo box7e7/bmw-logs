@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { db1, db2 } = require('./database');
 const fs = require('fs').promises
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
