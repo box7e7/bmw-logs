@@ -3,7 +3,7 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 RUN yarn install --frozen-lockfile
 
 # Copy Prisma schema and migrations if they exist
