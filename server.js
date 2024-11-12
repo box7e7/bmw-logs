@@ -242,6 +242,8 @@ app.use((req, res, next) => {
 });
 
 
+await getAuthInfo()
+
 app.get('/', (req, res) => {
   res.send('Welcome to the authenticated route!');
 });
