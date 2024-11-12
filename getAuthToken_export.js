@@ -1,7 +1,8 @@
-const fetch = require('node-fetch');
-const fs = require('fs').promises
-require('dotenv').config();
+import fetch from 'node-fetch';
+import { promises as fs } from 'fs';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 let user_urgently=process.env.URGENTLY_USER
 let password_urgently=process.env.URGENTLY_PASSWORD
