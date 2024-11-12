@@ -1,6 +1,7 @@
 {
   "name": "express-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Express server with Prisma, JWT authentication, Axios, and additional utilities",
   "main": "server.js",
   "scripts": {
