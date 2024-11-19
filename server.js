@@ -13,15 +13,10 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-const JWT_SECRET=process.env.JWT_SECRET
-
-
 const app = express();
 app.use(bodyParser.json());
 
-let jwt_secret = JWT_SECRET;
-
-
+let jwt_secret = process.env.JWT_SECRET;
 
 // Define the upsertBMW function
 async function upsertBMW(id, createData, updateData) {
@@ -32,7 +27,6 @@ async function upsertBMW(id, createData, updateData) {
   });
   return bmw;
 }
-
 
 let drivers_uid_metro = [
   { 'driver_name': 'ABU SALIM SAMER',      'driver_id_towbook': 401438 },
@@ -62,8 +56,6 @@ let drivers_uid_metro = [
   { 'driver_name': 'Dementry cloud',       'driver_id_towbook': 538706 },
   { 'driver_name': 'aHMAD   ALNSAIRAT',    'driver_id_towbook': 401439 },
 ];
-
-
 
 let drivers_uid={}
 drivers_uid_metro.forEach(el=>{
@@ -244,6 +236,7 @@ app.use((req, res, next) => {
 
 await getAuthInfo()
 
+
 app.get('/', (req, res) => {
   res.send('Welcome to the authenticated route!');
 });
@@ -251,23 +244,17 @@ app.get('/', (req, res) => {
 
 
 app.get('/jobinfo', async (req, res) => {
-
     const { po_number } = req.query;
     console.log(po_number)
 
-    let job={}
-    let token=await getAuthInfo()
-    let jobDetails_0=await getJobDetails(po_number,token)
+    let jobs = []; // Changed from single job object to array
+    let token = await getAuthInfo()
+    let jobDetails_0 = await getJobDetails(po_number, token)
+    let casePO = jobDetails_0["data"][0]["caseDTO"]["id"]
+    let jobDetails = await getCaseDetails(casePO, token)
 
-    let casePO=jobDetails_0["data"][0]["caseDTO"]["id"]
-
-
-
-
-    let jobDetails= await getCaseDetails(casePO,token)
-
-    console.log("////// case PO //////",casePO)
-    console.log("///// case details //////",jobDetails)
+    console.log("////// case PO //////", casePO)
+    console.log("///// case details //////", jobDetails)
     const options = {
       year: 'numeric',
       month: '2-digit',
@@ -278,92 +265,80 @@ app.get('/jobinfo', async (req, res) => {
       hour12: true
     };
   
-  //////// get all job details to dispatch job ////////
-  try{
-      let timestampInMilliSeconds=jobDetails["jobs"][0]["service"]["created"]
-      let date = new Date(timestampInMilliSeconds);
-      job["createdAt"]=`${date.toLocaleString('en-US', options)}`
-      job["PO"]=jobDetails["jobs"][0]["service"]["number"]
-      job["casePO"]=jobDetails["jobs"][0]["caseDTO"]["id"]
-      job["towFrom"]=jobDetails["jobs"][0]["location"]["address"]
-      job["towTo"]=jobDetails["jobs"][0]["dropOffLocation"] ? jobDetails["jobs"][0]["dropOffLocation"]["address"] : null
-      job["vehicle"]=jobDetails["jobs"][0]["vehicle"]
-
-      job["contact"]=jobDetails["jobs"][0]["personalInfo"]?.["name"]
-      job["phone"]=jobDetails["jobs"][0]["personalInfo"]?.["phone"]
-      job["serviceType"]=jobDetails["jobs"][0]["service"]["serviceType"]
-      job["provider"]=jobDetails["jobs"][0].provider?.firstName ? jobDetails["jobs"][0].provider : jobDetails_0["data"][0].provider
-      job["driverDTO"]=jobDetails["jobs"][0].driverDTO
-
-      // let driverName=`${jobDetails["jobs"][0].provider?.firstName} ${jobDetails["jobs"][0].provider?.lastName}`
-
-      let driverName=`${job["provider"]?.firstName} ${job["provider"]?.lastName}`
-
-
-      console.log("$$$$$$$",jobDetails["jobs"][0].provider, jobDetails_0["data"][0].provider)
-
-      console.log("%%%%%%%", driverName,filterName(driverName),drivers_uid[filterName(driverName)])
-      
-      let towbook_id=drivers_uid[filterName(driverName)]
-       towbook_id ? job["driverIdTowbook"]=towbook_id : null
-
-      // console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-      // console.log("$$$$$$$$$$$$$$$ job extracted $$$$$$$$$$$$$$$$$")
-      // console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-      // console.log(job)
-      // console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-      // console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-      // console.log("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-      
-      res.json( job );
-    }
-    catch(e){
-      console.log("//// error catched from job /////",e)
-    }
-
-    
-
-  });
-  
-
-  app.post('/upsert', async (req, res) => {
-    const { job_data } = req.body;
-  
-    // Extract PO from job_data
-    const po_number = parseFloat(job_data?.PO);
-  
-    if (!po_number || !job_data) {
-      return res.status(400).json({ error: 'job_data with PO number is required' });
-    }
-
-    const createdAt = job_data.createdAT ? moment(job_data.createdAT).toISOString() : null;
-
-    if (!createdAt) {
-      return res.status(400).json({ error: 'Invalid createdAT format; expected ISO-8601 DateTime' });
-    }
-
-    // Replace `createdAT` in `job_data` with the properly formatted value
-    job_data.createdAT = createdAt;
-
-    // Format `completed` in the "MM/DD/YYYY, hh:mm:ss A" format
-    const completed = job_data.createdAT ? moment(job_data.createdAT).format("MM/DD/YYYY, hh:mm:ss A") : null;
-    // Replace or set `completed` in `job_data` with the formatted value
-    job_data.completed = completed;
-  
     try {
-      // Define the data for creation and update
-      const createData = { ...job_data,  PO: po_number };
-      const updateData = { ...job_data , PO: po_number };
-  
-      // Use the upsertBMW function to upsert data
-      const result = await upsertBMW(po_number, createData, updateData);
-  
-      res.json({ message: 'Upsert successful', data: result });
-    } catch (error) {
-      console.error('Error in /upsert route:', error);
-      res.status(500).json({ error: 'Failed to upsert job' });
+        // Loop through all available jobs
+        for (let i = 0; i < jobDetails["jobs"].length; i++) {
+            let job = {};
+            let currentJob = jobDetails["jobs"][i];
+            
+            let timestampInMilliSeconds = currentJob["service"]["created"]
+            let date = new Date(timestampInMilliSeconds);
+            job["createdAt"] = `${date.toLocaleString('en-US', options)}`
+            job["PO"] = currentJob["service"]["number"]
+            job["casePO"] = currentJob["caseDTO"]["id"]
+            job["towFrom"] = currentJob["location"]["address"]
+            job["towTo"] = currentJob["dropOffLocation"] ? currentJob["dropOffLocation"]["address"] : null
+            job["vehicle"] = currentJob["vehicle"]
+            job["contact"] = currentJob["personalInfo"]?.["name"]
+            job["phone"] = currentJob["personalInfo"]?.["phone"]
+            job["serviceType"] = currentJob["service"]["serviceType"]
+            job["provider"] = currentJob.provider?.firstName ? currentJob.provider : jobDetails_0["data"][0].provider
+            job["driverDTO"] = currentJob.driverDTO
+
+            let driverName = `${job["provider"]?.firstName} ${job["provider"]?.lastName}`
+            let towbook_id = drivers_uid[filterName(driverName)]
+            if (towbook_id) job["driverIdTowbook"] = towbook_id
+
+            jobs.push(job); // Add job to array
+        }
+      
+        res.json(jobs); // Return array of jobs
+    } catch(e) {
+        console.log("//// error catched from job /////", e)
+        res.status(500).json({ error: e.message });
     }
-  });
+});
+
+
+
+app.post('/upsert', async (req, res) => {
+  const { job_data } = req.body;
+  
+  // Extract PO from job_data
+  const po_number = parseFloat(job_data?.PO);
+  
+  if (!po_number || !job_data) {
+    return res.status(400).json({ error: 'job_data with PO number is required' });
+  }
+
+  const createdAt = job_data.createdAT ? moment(job_data.createdAT).toISOString() : null;
+
+  if (!createdAt) {
+    return res.status(400).json({ error: 'Invalid createdAT format; expected ISO-8601 DateTime' });
+  }
+
+  // Replace `createdAT` in `job_data` with the properly formatted value
+  job_data.createdAT = createdAt;
+
+  // Format `completed` in the "MM/DD/YYYY, hh:mm:ss A" format
+  const completed = job_data.createdAT ? moment(job_data.createdAT).format("MM/DD/YYYY, hh:mm:ss A") : null;
+  // Replace or set `completed` in `job_data` with the formatted value
+  job_data.completed = completed;
+  
+  try {
+    // Define the data for creation and update
+    const createData = { ...job_data,  PO: po_number };
+    const updateData = { ...job_data , PO: po_number };
+  
+    // Use the upsertBMW function to upsert data
+    const result = await upsertBMW(po_number, createData, updateData);
+  
+    res.json({ message: 'Upsert successful', data: result });
+  } catch (error) {
+    console.error('Error in /upsert route:', error);
+    res.status(500).json({ error: 'Failed to upsert job' });
+  }
+});
   
 
 
